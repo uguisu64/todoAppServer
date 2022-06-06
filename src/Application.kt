@@ -10,7 +10,7 @@ import java.sql.Connection
 
 fun main() {
     //sqliteのDataBaseファイルのパス
-    val dbPath = "jdbc:sqlite:C:\\src\\sqlite3\\test.db"
+    val dbPath = "jdbc:sqlite:C:\\src\\sqlite3\\todoAppDB.db"
 
     //sqliteへの接続
     Database.connect(dbPath,"org.sqlite.JDBC")
@@ -21,8 +21,8 @@ fun main() {
             get("/") {
                 call.respondText("Hello World!", ContentType.Text.Plain)
             }
-            get("/demo") {
-                call.respondText("HELLO WORLD!")
+            get("/user") {
+
             }
         }
     }
