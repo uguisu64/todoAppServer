@@ -1,3 +1,4 @@
+import dataclass.TaskData
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
@@ -18,10 +19,7 @@ fun main() {
 
     val server = embeddedServer(Netty, port = 8080) {
         routing {
-            get("/") {
-                call.respondText("Hello World!", ContentType.Text.Plain)
-            }
-            get("/user") {
+            route("/user/{id}") {
 
             }
         }
