@@ -5,13 +5,13 @@ import dsl.User
 
 class Friend () {
     fun friendsearch(Usersid: Int){
-        transaction {
+        return transaction {
             val friendid = User.select { User.id eq Usersid }.single()[User.name]
         }
     }
 
     fun friendlist(Usersid: Int,Username: String) {
-        transaction {
+        return transaction {
             val friendid = User.select { User.id eq Usersid }.single()[User.id]
         }
     }
