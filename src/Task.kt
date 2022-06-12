@@ -2,6 +2,7 @@ import dataclass.TaskData
 import dsl.UserTaskTable
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
@@ -34,5 +35,19 @@ class Task() {
                 it[tag] = data.tag
             }
         }
+    }
+
+    fun allTask(userId : Int) : MutableList<TaskData> {
+        val taskTable = UserTaskTable(userId)
+        val tasks = mutableListOf<TaskData>()
+
+        transaction {
+            taskTable.selectAll().forEach() {
+                val task = TaskData(it[taskTable.taskId], it[taskTable.name], it[taskTable.deadLine], it[taskTable.priority], it[taskTable.share], it[taskTable.tag])
+                tasks.add(task)
+            }
+        }
+
+        return tasks
     }
 }

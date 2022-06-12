@@ -3,7 +3,7 @@ package dsl
 import org.jetbrains.exposed.sql.Table
 
 class UserTaskTable(id : Int) : Table("UserTask$id") {
-    val taskId = integer("id").autoIncrement()
+    val taskId = integer("taskId").autoIncrement()
     val name = text("name")
     val deadLine = text("deadline")
     val priority = integer("priority")

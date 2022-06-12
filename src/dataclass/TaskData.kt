@@ -1,7 +1,6 @@
 package dataclass
 
-import java.time.LocalDate
-
+@kotlinx.serialization.Serializable
 data class TaskData(
     val taskId : Int,
     val name : String,
