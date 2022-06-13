@@ -30,11 +30,10 @@ class UserManage {
     fun createUser(name : String, pass : String): Int {
         var userId = 0
         transaction {
-            val record = User.insert {
+            userId = User.insert {
                 it[User.name] = name
                 it[User.pass] = pass
-            }
-            userId = record[User.id]
+            } get User.id
         }
         return userId
     }

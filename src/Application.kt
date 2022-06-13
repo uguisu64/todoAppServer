@@ -31,6 +31,14 @@ fun main() {
             json()
         }
         routing {
+            post("/user") {
+                val name = call.parameters["name"]
+                val pass = call.parameters["pass"]
+                if(name != null && pass != null) {
+                    val userId = userManage.createUser(name,pass)
+                    call.respond(UserData(userId,name,pass))
+                }
+            }
             route("/user/{userId}") {
                 get("/task") {
                     val name = call.parameters["name"]
