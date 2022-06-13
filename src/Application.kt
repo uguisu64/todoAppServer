@@ -79,6 +79,18 @@ fun main() {
                         }
                     }
                 }
+                delete("task/{taskId}") {
+                    val name   = call.parameters["name"]
+                    val pass   = call.parameters["pass"]
+                    val userId = call.parameters["userId"]
+                    val taskId = call.parameters["taskId"]
+                    if((userId != null) && (name != null) && (pass != null) && (taskId != null)) {
+                        val userData = UserData(userId.toInt(),name,pass)
+                        if(userManage.authUser(userData)){
+                            taskManager.deleteTask(userId.toInt(),taskId.toInt())
+                        }
+                    }
+                }
             }
         }
     }

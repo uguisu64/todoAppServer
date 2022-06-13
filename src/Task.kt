@@ -1,10 +1,7 @@
 import dataclass.TaskData
 import dsl.UserTaskTable
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
 class Task() {
     fun addTask(userId : Int, data : TaskData): Int {
@@ -37,6 +34,14 @@ class Task() {
                 it[share]    = data.share
                 it[tag]      = data.tag
             }
+        }
+    }
+
+    fun deleteTask(userId: Int, taskId : Int) {
+        val taskTable = UserTaskTable(userId)
+
+        transaction {
+            taskTable.deleteWhere { taskTable.taskId eq taskId }
         }
     }
 
