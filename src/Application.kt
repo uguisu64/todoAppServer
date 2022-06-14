@@ -2,7 +2,6 @@ import dataclass.TaskData
 import dataclass.UserData
 import io.ktor.application.*
 import io.ktor.features.*
-import io.ktor.http.cio.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -11,13 +10,14 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Connection
-import kotlin.reflect.jvm.internal.impl.load.java.JavaClassFinder.Request
 
-fun main() {
+fun main(args: Array<String>) {
+    if(args.size != 2) {
+        return
+    }
     //sqliteのDataBaseファイルのパス
-    val dbPath = "jdbc:sqlite:C:\\src\\sqlite3\\todoAppDB.db"
+    val dbPath = "jdbc:sqlite:${args[1]}"
 
     //sqliteへの接続
     Database.connect(dbPath,"org.sqlite.JDBC")
@@ -26,7 +26,7 @@ fun main() {
     val taskManager = Task()
     val userManage  = UserManage()
 
-    val server = embeddedServer(Netty, port = 8080) {
+    val server = embeddedServer(Netty, port = args[0].toInt()) {
         install(ContentNegotiation) {
             json()
         }
