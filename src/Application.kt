@@ -14,6 +14,8 @@ import java.sql.Connection
 
 fun main(args: Array<String>) {
     if(args.size != 2) {
+        println("実行するには")
+        println("java -jar 実行ファイル名 [ポート番号] [sqliteのファイルパス]のように実行してください")
         return
     }
     //sqliteのDataBaseファイルのパス
