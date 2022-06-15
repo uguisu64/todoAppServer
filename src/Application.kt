@@ -13,11 +13,13 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.sql.Connection
 
 fun main(args: Array<String>) {
+    //コマンドライン引数がない場合プログラムを終了させる
     if(args.size != 2) {
         println("実行するには")
         println("java -jar 実行ファイル名 [ポート番号] [sqliteのファイルパス]のように実行してください")
         return
     }
+
     //sqliteのDataBaseファイルのパス
     val dbPath = "jdbc:sqlite:${args[1]}"
 
@@ -25,21 +27,21 @@ fun main(args: Array<String>) {
     Database.connect(dbPath,"org.sqlite.JDBC")
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
+    //各クラスのインスタンス化
     val taskManager = Task()
     val userManage  = UserManage()
 
+    //サーバーの設定
     val server = embeddedServer(Netty, port = args[0].toInt()) {
         install(ContentNegotiation) {
             json()
         }
         routing {
             post("/user") {
-                val name = call.parameters["name"]
-                val pass = call.parameters["pass"]
-                if(name != null && pass != null) {
-                    val userId = userManage.createUser(name,pass)
-                    call.respond(UserData(userId,name,pass))
-                }
+                val request = call.receive<UserData>()
+
+                val userId = userManage.createUser(request.name,request.pass)
+                call.respond(UserData(userId,request.name,request.pass))
             }
             route("/user/{userId}") {
                 get("/task") {
@@ -96,5 +98,6 @@ fun main(args: Array<String>) {
             }
         }
     }
+    //サーバーの実行
     server.start(wait = true)
 }
