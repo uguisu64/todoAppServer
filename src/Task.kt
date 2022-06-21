@@ -1,33 +1,57 @@
+/*
+*** File Name           : Task.kt
+*** Designer            : 加藤　颯真
+*** Date                : 2022.06.21
+*** Purpose             : タスクの追加、削除、編集等のタスクテーブルに関わる処理を行うクラス
+*/
+/*  Commit History
+*** 2022.06.07 6/7
+*** 2022.06.12 json返却追加
+*** 2022.06.13 タスク関連追加
+*** 2022.06.14 タスク削除
+*** 2022.06.21 テーブル仕様変更
+ */
+
 import dataclass.TaskData
-import dsl.UserTaskTable
+import dsl.TaskTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class Task() {
-    fun addTask(userId : Int, data : TaskData): Int {
-        val taskTable = UserTaskTable(userId)
+    /*
+    関数名: addTask
+    引数　: data : TaskData
+    返り値: Int
+    動作　: 受け取ったタスクデータをタスクテーブルに書き込む。割り当てられたtaskIdを返す
+    作成者: 加藤　颯真
+     */
+    fun addTask(data : TaskData): Int {
         var taskId = 0
 
         transaction {
-            SchemaUtils.create(taskTable)
-
-            taskId = taskTable.insert {
+            taskId = TaskTable.insert {
                 it[name]     = data.name
+                it[userId]   = data.userId
                 it[deadLine] = data.deadLine
                 it[priority] = data.priority
                 it[share]    = data.share
                 it[tag]      = data.tag
-            } get taskTable.taskId
+            } get TaskTable.taskId
         }
 
         return taskId
     }
 
-    fun editTask(userId : Int, data : TaskData) {
-        val taskTable = UserTaskTable(userId)
-
+    /*
+    関数名: editTask
+    引数　: data : TaskData
+    返り値: Unit
+    動作　: dataの内容でタスクテーブルの同じtaskIdのレコードを更新する
+    作成者: 加藤　颯真
+     */
+    fun editTask(data : TaskData) {
         transaction {
-            taskTable.update ({taskTable.taskId eq data.taskId}) {
+            TaskTable.update ({(TaskTable.taskId eq data.taskId) and (TaskTable.userId eq data.userId)}) {
                 it[name]     = data.name
                 it[deadLine] = data.deadLine
                 it[priority] = data.priority
@@ -37,26 +61,38 @@ class Task() {
         }
     }
 
-    fun deleteTask(userId: Int, taskId : Int) {
-        val taskTable = UserTaskTable(userId)
-
+    /*
+    関数名: deleteTask
+    引数　: userId : Int, taskId : Int
+    返り値: Unit
+    動作　: userIdとtaskIdを受け取り、該当するレコードをタスクテーブルから削除する
+    作成者: 加藤　颯真
+     */
+    fun deleteTask(userId : Int, taskId : Int) {
         transaction {
-            taskTable.deleteWhere { taskTable.taskId eq taskId }
+            TaskTable.deleteWhere { (TaskTable.taskId eq taskId) and (TaskTable.userId eq userId) }
         }
     }
 
+    /*
+    関数名: allTask
+    引数　: userId : Int
+    返り値: MutableList<TaskData>
+    動作　: userIdを受け取り、そのIDのユーザーの全てのレコードをリストにして返す
+    作成者: 加藤　颯真
+     */
     fun allTask(userId : Int) : MutableList<TaskData> {
-        val taskTable = UserTaskTable(userId)
         val tasks = mutableListOf<TaskData>()
 
         transaction {
-            taskTable.selectAll().forEach() {
-                val task = TaskData(taskId   = it[taskTable.taskId],
-                                    name     = it[taskTable.name],
-                                    deadLine = it[taskTable.deadLine],
-                                    priority = it[taskTable.priority],
-                                    share    = it[taskTable.share],
-                                    tag      = it[taskTable.tag])
+            TaskTable.select { TaskTable.userId eq userId }.forEach {
+                val task = TaskData(taskId   = it[TaskTable.taskId],
+                                    userId   = it[TaskTable.userId],
+                                    name     = it[TaskTable.name],
+                                    deadLine = it[TaskTable.deadLine],
+                                    priority = it[TaskTable.priority],
+                                    share    = it[TaskTable.share],
+                                    tag      = it[TaskTable.tag])
                 tasks.add(task)
             }
         }
