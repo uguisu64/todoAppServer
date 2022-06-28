@@ -1,8 +1,8 @@
 /*
 *** File Name           : Application.kt
 *** Designer            : 加藤　颯真
-*** Date                : 2022.06.20
-*** Purpose             : サーバーに必要なクラスのインスタンス化。サーバーの設定を行い実行する。
+*** Date                : 2022.06.21
+*** Purpose             : main関数内で、サーバーに必要なクラスのインスタンス化とサーバーの設定と実行を行う
 */
 /*  Commit History
 *** 2022.05.31 : first commit
@@ -17,10 +17,15 @@
 *** 2022.06.15 : パラメータエラー文追加
 *** 2022.06.15 : ユーザ追加処理変更
 *** 2022.06.20 : 表題コメント追加
+*** 2022.06.21 : テーブル仕様変更
+*** 2022.06.28 : サーバー応答変更
 */
 
 import dataclass.TaskData
 import dataclass.UserData
+import dsl.FriendTable
+import dsl.TaskTable
+import dsl.User
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
@@ -30,7 +35,10 @@ import io.ktor.serialization.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.lang.reflect.Executable
 import java.sql.Connection
 
 fun main(args: Array<String>) {
@@ -48,9 +56,20 @@ fun main(args: Array<String>) {
     Database.connect(dbPath,"org.sqlite.JDBC")
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
+    //テーブルの作成(テーブルがない場合)
+    transaction {
+        SchemaUtils.create(User)
+        SchemaUtils.create(TaskTable)
+        SchemaUtils.create(FriendTable)
+    }
+
     //各クラスのインスタンス化
-    val taskManager = Task()
-    val userManage  = UserManage()
+    val taskManager  = Task()
+    val userManage   = UserManage()
+    val friendManage = Friend()
+
+    val success = "success"
+    val failed  = "failed"
 
     //サーバーの設定
     val server = embeddedServer(Netty, port = args[0].toInt()) {
@@ -59,61 +78,134 @@ fun main(args: Array<String>) {
         }
         routing {
             post("/user") {
-                val request = call.receive<UserData>()
+                try {
+                    val request = call.receive<UserData>()
 
-                val userId = userManage.createUser(request.name,request.pass)
-                call.respond(UserData(userId,request.name,request.pass))
+                    userManage.createUser(request.name,request.pass)
+                    call.respondText(success)
+                }
+                catch (e: Exception) {
+                    call.respondText(failed)
+                }
             }
             route("/user/{userId}") {
-                get("/task") {
+                //タスク関連の処理
+                get("task") {
                     val name = call.parameters["name"]
                     val pass = call.parameters["pass"]
                     val id   = call.parameters["userId"]
                     if(id != null && name != null && pass != null){
                         val userData = UserData(id.toInt(),name,pass)
-                        if(userManage.authUser(userData)){
+                        if(userManage.authUser(userData) && userData.id == id.toInt()){
                             call.respond(taskManager.allTask(id.toInt()))
                         }
                     }
                 }
-                post("/task") {
-                    val request = call.receive<TaskData>()
+                post("task") {
+                    try {
+                        val request = call.receive<TaskData>()
 
-                    val name = call.parameters["name"]
-                    val pass = call.parameters["pass"]
-                    val id   = call.parameters["userId"]
-                    if(id != null && name != null && pass != null) {
-                        val userData = UserData(id.toInt(),name,pass)
-                        if(userManage.authUser(userData)){
-                            val taskId = taskManager.addTask(id.toInt(),request)
-                            call.respond(request.copy(taskId = taskId))
+                        val name = call.parameters["name"]
+                        val pass = call.parameters["pass"]
+                        val id   = call.parameters["userId"]
+                        if(id != null && name != null && pass != null) {
+                            val userData = UserData(id.toInt(),name,pass)
+                            if(userManage.authUser(userData) && userData.id == id.toInt()){
+                                taskManager.addTask(request)
+                                call.respondText(success)
+                            }
+                            else{
+                                call.respondText(failed)
+                            }
                         }
+                    }
+                    catch (e: Exception) {
+                        call.respondText(failed)
                     }
                 }
                 post("task/{taskId}") {
-                    val request = call.receive<TaskData>()
+                    try {
+                        val request = call.receive<TaskData>()
 
+                        val name = call.parameters["name"]
+                        val pass = call.parameters["pass"]
+                        val id   = call.parameters["userId"]
+                        if(id != null && name != null && pass != null) {
+                            val userData = UserData(id.toInt(),name,pass)
+                            if(userManage.authUser(userData) && userData.id == id.toInt()){
+                                taskManager.editTask(request)
+                                call.respond(request)
+                            }
+                            else {
+                                call.respondText(failed)
+                            }
+                        }
+                    }
+                    catch (e: Exception) {
+                        call.respondText(failed)
+                    }
+                }
+                delete("task/{taskId}") {
+                    try {
+                        val name   = call.parameters["name"]
+                        val pass   = call.parameters["pass"]
+                        val userId = call.parameters["userId"]
+                        val taskId = call.parameters["taskId"]
+                        if((userId != null) && (name != null) && (pass != null) && (taskId != null)) {
+                            val userData = UserData(userId.toInt(),name,pass)
+                            if(userManage.authUser(userData)){
+                                taskManager.deleteTask(userId.toInt(),taskId.toInt())
+                                call.respondText(success)
+                            }
+                            else {
+                                call.respondText(failed)
+                            }
+                        }
+                    }
+                    catch (e: Exception) {
+                        call.respondText(failed)
+                    }
+                }
+
+                //フレンド関連の処理
+                get("friend") {
                     val name = call.parameters["name"]
                     val pass = call.parameters["pass"]
                     val id   = call.parameters["userId"]
                     if(id != null && name != null && pass != null) {
-                        val userData = UserData(id.toInt(),name,pass)
-                        if(userManage.authUser(userData)){
-                            taskManager.editTask(id.toInt(),request)
-                            call.respond(request)
-                        }
+                        val friendlist = friendManage.friendlist(id.toInt())
                     }
                 }
-                delete("task/{taskId}") {
+                post("friend") {
+                    val name = call.parameters["name"]
+                    val pass = call.parameters["pass"]
+                    val id   = call.parameters["userId"]
+                    if(id != null && name != null && pass != null) {
+
+                    }
+                }
+                get("friend/accept") {
+                    val name = call.parameters["name"]
+                    val pass = call.parameters["pass"]
+                    val id   = call.parameters["userId"]
+                    if(id != null && name != null && pass != null) {
+
+                    }
+                }
+                post("friend/accept/{friendId}") {
                     val name   = call.parameters["name"]
                     val pass   = call.parameters["pass"]
                     val userId = call.parameters["userId"]
-                    val taskId = call.parameters["taskId"]
-                    if((userId != null) && (name != null) && (pass != null) && (taskId != null)) {
-                        val userData = UserData(userId.toInt(),name,pass)
-                        if(userManage.authUser(userData)){
-                            taskManager.deleteTask(userId.toInt(),taskId.toInt())
-                        }
+                    if(userId != null && name != null && pass != null) {
+
+                    }
+                }
+                get("/friend/task") {
+                    val name   = call.parameters["name"]
+                    val pass   = call.parameters["pass"]
+                    val userId = call.parameters["userId"]
+                    if(userId != null && name != null && pass != null) {
+
                     }
                 }
             }
