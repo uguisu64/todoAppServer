@@ -10,8 +10,10 @@
 *** 2022.06.13 タスク関連追加
 *** 2022.06.14 タスク削除
 *** 2022.06.21 テーブル仕様変更
+*** 2022.07.03 : 仕様変更修正
  */
 
+import dataclass.FriendTaskData
 import dataclass.TaskData
 import dsl.TaskTable
 import org.jetbrains.exposed.sql.*
@@ -25,7 +27,7 @@ class Task() {
     動作　: 受け取ったタスクデータをタスクテーブルに書き込む。割り当てられたtaskIdを返す
     作成者: 加藤　颯真
      */
-    fun addTask(data : TaskData): Int {
+    fun addTask(data: TaskData): Int {
         var taskId = 0
 
         transaction {
@@ -49,7 +51,7 @@ class Task() {
     動作　: dataの内容でタスクテーブルの同じtaskIdのレコードを更新する
     作成者: 加藤　颯真
      */
-    fun editTask(data : TaskData) {
+    fun editTask(data: TaskData) {
         transaction {
             TaskTable.update ({(TaskTable.taskId eq data.taskId) and (TaskTable.userId eq data.userId)}) {
                 it[name]     = data.name
@@ -68,7 +70,7 @@ class Task() {
     動作　: userIdとtaskIdを受け取り、該当するレコードをタスクテーブルから削除する
     作成者: 加藤　颯真
      */
-    fun deleteTask(userId : Int, taskId : Int) {
+    fun deleteTask(userId: Int, taskId : Int) {
         transaction {
             TaskTable.deleteWhere { (TaskTable.taskId eq taskId) and (TaskTable.userId eq userId) }
         }
@@ -81,18 +83,42 @@ class Task() {
     動作　: userIdを受け取り、そのIDのユーザーの全てのレコードをリストにして返す
     作成者: 加藤　颯真
      */
-    fun allTask(userId : Int) : MutableList<TaskData> {
+    fun allTask(userId: Int) : MutableList<TaskData> {
         val tasks = mutableListOf<TaskData>()
 
         transaction {
             TaskTable.select { TaskTable.userId eq userId }.forEach {
-                val task = TaskData(taskId   = it[TaskTable.taskId],
-                                    userId   = it[TaskTable.userId],
-                                    name     = it[TaskTable.name],
-                                    deadLine = it[TaskTable.deadLine],
-                                    priority = it[TaskTable.priority],
-                                    share    = it[TaskTable.share],
-                                    tag      = it[TaskTable.tag])
+                val task = TaskData(
+                    taskId   = it[TaskTable.taskId],
+                    userId   = it[TaskTable.userId],
+                    name     = it[TaskTable.name],
+                    deadLine = it[TaskTable.deadLine],
+                    priority = it[TaskTable.priority],
+                    share    = it[TaskTable.share],
+                    tag      = it[TaskTable.tag]
+                )
+                tasks.add(task)
+            }
+        }
+
+        return tasks
+    }
+
+    fun friendTask(friendId: Int, friendName: String) : MutableList<FriendTaskData> {
+        val tasks = mutableListOf<FriendTaskData>()
+
+        transaction {
+            TaskTable.select { TaskTable.userId eq friendId }.forEach {
+                val task = FriendTaskData(
+                    taskId   = it[TaskTable.taskId],
+                    userId   = it[TaskTable.userId],
+                    userName = friendName,
+                    name     = it[TaskTable.name],
+                    deadLine = it[TaskTable.deadLine],
+                    priority = it[TaskTable.priority],
+                    share    = it[TaskTable.share],
+                    tag      = it[TaskTable.tag]
+                )
                 tasks.add(task)
             }
         }

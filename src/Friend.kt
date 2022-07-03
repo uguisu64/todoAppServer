@@ -14,6 +14,7 @@
 *** 2022.06.28 : フレンド申請関連追加
 *** 2022.07.03 : フレンド申請関連修正
 *** 2022.07.03 : フレンド申請画面追加
+*** 2022.07.03 : 仕様変更修正
  */
 
 import dataclass.FriendApplyData
@@ -127,8 +128,8 @@ class Friend () {
     fun FriendApply(myid : Int, friendId: Int){ //フレンド申請
         transaction {
             FriendApplyTable.insert {  //フレンド申請の許可、不許可に使う
-                it[Myid] = myid
-                it[Friendid] = friendId
+                it[Myid] = friendId
+                it[Friendid] = myid
             }
         }
     }

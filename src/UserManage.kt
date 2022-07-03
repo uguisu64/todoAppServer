@@ -8,6 +8,7 @@
 *** 2022.06.13 タスク関連追加
 *** 2022.06.13 ユーザー追加
 *** 2022.06.21 テーブル仕様変更
+*** 2022.07.03 : 仕様変更修正
  */
 
 import dataclass.UserData
@@ -25,7 +26,7 @@ class UserManage {
     動作　: DBのUserテーブルにアクセスしてUserDataのユーザーのデータが正しいかを返す。正しければtrueを返す。
     作成者: 加藤　颯真
      */
-    fun authUser(userData : UserData): Boolean {
+    fun authUser(userData: UserData) : Boolean {
         var auth = false
         transaction {
             val record =  User.select { User.id eq userData.id }.single()
@@ -44,7 +45,7 @@ class UserManage {
     動作　: DBのUserテーブルにアクセスし、userIdのUserDataを返す
     作成者: 加藤　颯真
      */
-    fun userData(userId : Int): UserData {
+    fun userData(userId: Int) : UserData {
         lateinit var record: ResultRow
         transaction {
             record = User.select { User.id eq userId }.single()
@@ -59,7 +60,7 @@ class UserManage {
     動作　: name,passを受け取り、DBのUserテーブルにアクセスし、新しいユーザーを登録する
     作成者: 加藤　颯真
      */
-    fun createUser(name : String, pass : String): Int {
+    fun createUser(name: String, pass: String) : Int {
         var userId = 0
         transaction {
             userId = User.insert {
