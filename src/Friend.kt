@@ -95,6 +95,8 @@ class Friend () {
                 FriendTable.insert { //FriendTableに書き込む
                     it[UserId] = myid
                     it[Friendid] = friendid
+                    it[Friendid] = myid
+                    it[UserId] = friendid
                 }
             }
             FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
