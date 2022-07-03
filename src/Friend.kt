@@ -95,6 +95,8 @@ class Friend () {
                 FriendTable.insert { //FriendTableに書き込む
                     it[UserId] = myid
                     it[Friendid] = friendid
+                }
+                FriendTable.insert {
                     it[Friendid] = myid
                     it[UserId] = friendid
                 }
