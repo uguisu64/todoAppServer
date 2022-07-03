@@ -33,11 +33,15 @@ class Friend () {
 
     fun friendlist(userId: Int): MutableList<FriendData> { //フレンド表示
 
-        var frinedid = mutableListOf<FriendData>()
+        val frinedid = mutableListOf<FriendData>()
         transaction {
-            val frinedid = FriendTable.select { FriendTable.UserId eq userId }.single()[FriendTable.Friendid]
+            FriendTable.select { FriendTable.UserId eq userId }.forEach {
+                val friendId = FriendData(
+                    Friendid = it[FriendTable.Friendid]
+                )
+            frinedid.add(friendId)
+            }
         }
-
         return frinedid;
     }
 
@@ -47,10 +51,6 @@ class Friend () {
             FriendTable.insert{
                 it[UserId] = userId
                 it[Friendid] = friendid
-            }
-            FriendApplyTable.insert {  //フレンド申請の許可、不許可に使う
-                it[Myid] = friendid  // 相手から見た場合、friendidがmyidになる
-                it[Friendid] = userId  //相手から見た場合、自分のuserIdがfriendidになる
             }
         }
     }
@@ -62,13 +62,19 @@ class Friend () {
     }
 
     fun friendapplymenu(Myid : Int) : MutableList<FriendApplyData>{ //フレンド申請画面
-        var apply = mutableListOf<FriendApplyData>()
+        var applys = mutableListOf<FriendApplyData>()
         transaction {
-            val apply = FriendApplyTable.select { FriendApplyTable.Myid eq Myid }.single()[FriendApplyTable.Friendid]
+            FriendApplyTable.select { FriendApplyTable.Myid eq Myid }.forEach{
+                val apply = FriendApplyData(
+                    Myid = it[FriendApplyTable.Myid],
+                    Friendid = it[FriendApplyTable.Friendid]
+                )
+                applys.add(apply)
+            }
 
         }
 
-        return apply;
+        return applys;
     }
 
 
@@ -82,6 +88,11 @@ class Friend () {
                     it[UserId] = myid
                     it[Friendid] = friendId
                 }
+            }
+
+            FriendApplyTable.insert {  //フレンド申請の許可、不許可に使う
+                it[Myid] = myid
+                it[Friendid] = friendId
             }
             FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
         }// FriendApplyTableからFriendTableに書き込んだ情報を消去
