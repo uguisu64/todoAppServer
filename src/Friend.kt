@@ -129,8 +129,8 @@ class Friend () {
     fun FriendApply(myid : Int, friendId: Int){ //フレンド申請
         transaction {
             FriendApplyTable.insert {  //フレンド申請の許可、不許可に使う
-                it[Myid] = myid
-                it[Friendid] = friendId
+                it[Myid] = friendId
+                it[Friendid] = myid
             }
         }
     }
