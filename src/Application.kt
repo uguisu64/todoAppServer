@@ -22,6 +22,7 @@
 *** 2022.07.02 : フレンドリクエスト処理追加
 *** 2022.07.02 : フレンドリクエスト処理修正
 *** 2022.07.03 : 仕様変更修正
+*** 2022.07.04 : フレンド申請処理修正
 */
 
 import dataclass.TaskData
@@ -269,8 +270,12 @@ fun main(args: Array<String>) {
                         if((userid != null) && (name != null) && (pass != null) && (friendId != null)) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                friendManage.FriendApply(userData.id,friendId.toInt())
-                                call.respondText(success)
+                                if(friendManage.FriendApply(userData.id,friendId.toInt())){
+                                    call.respondText(success)
+                                }
+                                else {
+                                    call.respond(HttpStatusCode.BadRequest,failed)
+                                }
                             }
                             else {
                                 call.respond(HttpStatusCode.BadRequest,failed)
