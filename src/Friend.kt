@@ -121,19 +121,27 @@ class Friend () {
     /*
     関数名: friendApply
     引数　: myid : Int, friendId : Int
-    返り値: なし
-    動作　: myIdとfriendIdを受け取り、FriendApplyTableに格納する
+    返り値: comf : Boolean
+    動作　: myIdとfriendIdを受け取り、FriendApplyTableに格納する。自分自身と既に申請した人は申請できないようにする。
     作成者: 平出　達大
     */
 
-    fun FriendApply(myid : Int, friendId: Int){ //フレンド申請
+    fun FriendApply(myid : Int, friendId: Int) : Boolean{ //フレンド申請
+        var comf = false
         transaction {
-            FriendApplyTable.insert {  //フレンド申請の許可、不許可に使う
-                it[Myid] = friendId
-                it[Friendid] = myid
+            val record = FriendTable.select{ (FriendTable.UserId eq myid) and (FriendTable.Friendid eq friendId)}.single()
+
+            if((myid != friendId) && record == null) {
+                comf = true
+                FriendApplyTable.insert {
+                    it[Myid] = myid
+                    it[Friendid] = friendId
+                }
             }
         }
+        return comf
     }
+
 
     /*
     関数名: apply
@@ -174,21 +182,5 @@ class Friend () {
         transaction {
             FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
         }  //FriendApplyTableから不許可した情報を消去
-    }
-
-    fun test(myid : Int,friendId: Int) : Boolean{
-        var comf = false
-        transaction {
-            val record = FriendTable.select{ (FriendTable.UserId eq myid) and (FriendTable.Friendid eq friendId)}.single()
-
-            if((myid != friendId) && record == null) {
-                comf = true
-                FriendApplyTable.insert {
-                    it[Myid] = myid
-                    it[Friendid] = friendId
-                }
-            }
-        }
-        return comf
     }
 }
