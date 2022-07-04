@@ -15,6 +15,7 @@
 *** 2022.07.03 : フレンド申請関連修正
 *** 2022.07.03 : フレンド申請画面追加
 *** 2022.07.03 : 仕様変更修正
+*** 2022.07.04 : FriendApply修正
  */
 
 import com.typesafe.config.ConfigException.Null
