@@ -16,6 +16,7 @@
 *** 2022.07.03 : フレンド申請画面追加
 *** 2022.07.03 : 仕様変更修正
 *** 2022.07.04 : FriendApply修正
+*** 2022.07.05 : ほぼ完成
  */
 
 import com.typesafe.config.ConfigException.Null
@@ -130,13 +131,14 @@ class Friend () {
     fun FriendApply(myid : Int, friendId: Int) : Boolean{ //フレンド申請
         var comf = false
         transaction {
-            val record = FriendTable.select{ (FriendTable.UserId eq myid) and (FriendTable.Friendid eq friendId)}.single()
+            User.select{ User.id eq myid }.single()
+            User.select{ User.id eq friendId }.single()
 
-            if((myid != friendId) && record == null) {
+            if((myid != friendId)) {
                 comf = true
                 FriendApplyTable.insert {
-                    it[Myid] = myid
-                    it[Friendid] = friendId
+                    it[Myid] = friendId
+                    it[Friendid] = myid
                 }
             }
         }

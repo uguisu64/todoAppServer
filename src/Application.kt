@@ -23,8 +23,10 @@
 *** 2022.07.02 : フレンドリクエスト処理修正
 *** 2022.07.03 : 仕様変更修正
 *** 2022.07.04 : フレンド申請処理修正
+*** 2022.07.05 : ほぼ完成
 */
 
+import dataclass.FriendTaskData
 import dataclass.TaskData
 import dataclass.UserData
 import dsl.FriendApplyTable
@@ -296,10 +298,14 @@ fun main(args: Array<String>) {
                         val name   = call.parameters["name"]
                         val pass   = call.parameters["pass"]
                         val userid = call.parameters["userId"]
+                        println(name)
                         if(userid != null && name != null && pass != null) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                call.respond(friendManage.friendapplymenu(userData.id))
+                                val friendApplyData = friendManage.friendapplymenu(userData.id)
+                                val userDataList = mutableListOf<UserData>()
+                                friendApplyData.forEach { userDataList.add(userManage.userData(it.Friendid).copy(pass = "")) }
+                                call.respond(userDataList)
                             }
                             else {
                                 call.respond(HttpStatusCode.BadRequest,failed)
@@ -361,14 +367,23 @@ fun main(args: Array<String>) {
                         if(userid != null && name != null && pass != null) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                val friendTask = mutableListOf<TaskData>()
+                                val friendTask = mutableListOf<FriendTaskData>()
                                 val friendList = mutableListOf<UserData>()
                                 friendManage.friendlist(userData.id).forEach {
                                     friendList.add(userManage.userData(it.Friendid))
                                 }
                                 friendList.forEach {
                                     taskManager.allTask(it.id).forEach { task ->
-                                        friendTask.add(task)
+                                        friendTask.add(FriendTaskData(
+                                            taskId = task.taskId,
+                                            userId = task.userId,
+                                            userName = it.name,
+                                            name = task.name,
+                                            deadLine = task.deadLine,
+                                            priority = task.priority,
+                                            share = task.share,
+                                            tag = task.tag
+                                        ))
                                     }
                                 }
                                 call.respond(friendTask)
