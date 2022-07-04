@@ -21,10 +21,12 @@
 *** 2022.06.28 : サーバー応答変更
 *** 2022.07.02 : フレンドリクエスト処理追加
 *** 2022.07.02 : フレンドリクエスト処理修正
+*** 2022.07.03 : 仕様変更修正
 */
 
 import dataclass.TaskData
 import dataclass.UserData
+import dsl.FriendApplyTable
 import dsl.FriendTable
 import dsl.TaskTable
 import dsl.User
@@ -41,7 +43,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.lang.reflect.Executable
 import java.sql.Connection
 
 fun main(args: Array<String>) {
@@ -64,6 +65,7 @@ fun main(args: Array<String>) {
         SchemaUtils.create(User)
         SchemaUtils.create(TaskTable)
         SchemaUtils.create(FriendTable)
+        SchemaUtils.create(FriendApplyTable)
     }
 
     //各クラスのインスタンス化
@@ -81,19 +83,39 @@ fun main(args: Array<String>) {
         }
         routing {
             post("/user") {
+                println("POST /user")
                 try {
                     val request = call.receive<UserData>()
 
-                    userManage.createUser(request.name,request.pass)
-                    call.respondText(success)
+                    val userId = userManage.createUser(request.name,request.pass)
+                    call.respond(request.copy(id = userId))
                 }
                 catch (e: Exception) {
+                    println(e)
+                    call.respond(HttpStatusCode.BadRequest,failed)
+                }
+            }
+            post("/auth") {
+                println("POST /auth")
+                try {
+                    val request = call.receive<UserData>()
+
+                    if(userManage.authUser(request)) {
+                        call.respondText(success)
+                    }
+                    else {
+                        call.respond(HttpStatusCode.BadRequest,failed)
+                    }
+                }
+                catch (e: Exception) {
+                    println(e)
                     call.respond(HttpStatusCode.BadRequest,failed)
                 }
             }
             route("/user/{userId}") {
                 //タスク関連の処理
                 get("task") {
+                    println("GET /user/{userId}/task")
                     try {
                         val name = call.parameters["name"]
                         val pass = call.parameters["pass"]
@@ -106,10 +128,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 post("task") {
+                    println("POST /user/{userId}/task")
                     try {
                         val request = call.receive<TaskData>()
 
@@ -118,7 +142,7 @@ fun main(args: Array<String>) {
                         val id   = call.parameters["userId"]
                         if(id != null && name != null && pass != null) {
                             val userData = UserData(id.toInt(),name,pass)
-                            if(userManage.authUser(userData) && userData.id == id.toInt()){
+                            if(userManage.authUser(userData) && userData.id == request.userId){
                                 taskManager.addTask(request)
                                 call.respondText(success)
                             }
@@ -128,10 +152,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 post("task/{taskId}") {
+                    println("POST /user/{userId}/task/{taskId}")
                     try {
                         val request = call.receive<TaskData>()
 
@@ -150,10 +176,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 delete("task/{taskId}") {
+                    println("DELETE /user/{userId}/task/{taskId}")
                     try {
                         val name   = call.parameters["name"]
                         val pass   = call.parameters["pass"]
@@ -171,12 +199,14 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
 
                 //フレンド関連の処理
                 get("friend") {
+                    println("GET /user/{userId}/friend")
                     try {
                         val friends = mutableListOf<UserData>()
 
@@ -188,7 +218,8 @@ fun main(args: Array<String>) {
                             if(userManage.authUser(userData)){
                                 val friendList = friendManage.friendlist(id.toInt())
                                 friendList.forEach {
-                                    friends.add(userManage.userData(it.Friendid))
+                                    val data = userManage.userData(it.Friendid)
+                                    friends.add(data.copy(pass = ""))
                                 }
                                 call.respond(friends)
                             }
@@ -198,10 +229,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 get("friend/search") {
+                    println("GET /user/{userId}/friend/search")
                     try {
                         val name     = call.parameters["name"]
                         val pass     = call.parameters["pass"]
@@ -211,7 +244,7 @@ fun main(args: Array<String>) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
                                 val friendData = userManage.userData(friendId.toInt())
-                                call.respond(mapOf("id" to friendData.id, "name" to friendData.name))
+                                call.respond(friendData.copy(pass = ""))
                             }
                             else {
                                 call.respond(HttpStatusCode.BadRequest,failed)
@@ -222,10 +255,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 post("friend/search") {
+                    println("POST /user/{userId}/friend/search")
                     try {
                         val name     = call.parameters["name"]
                         val pass     = call.parameters["pass"]
@@ -234,7 +269,7 @@ fun main(args: Array<String>) {
                         if((userid != null) && (name != null) && (pass != null) && (friendId != null)) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                friendManage.addfrined(userData.id, friendId.toInt())
+                                friendManage.FriendApply(userData.id,friendId.toInt())
                                 call.respondText(success)
                             }
                             else {
@@ -246,10 +281,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 get("friend/accept") {
+                    println("GET /user/{userId}/friend/accept")
                     try {
                         val name   = call.parameters["name"]
                         val pass   = call.parameters["pass"]
@@ -268,20 +305,34 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
-                post("friend/accept/{friendId}") {
+                post("friend/accept") {
+                    println("POST /user/{userId}/friend/accept")
                     try {
                         val name     = call.parameters["name"]
                         val pass     = call.parameters["pass"]
                         val userid   = call.parameters["userId"]
                         val friendId = call.parameters["friendId"]
+                        val reject   = call.parameters["reject"]
                         if((userid != null) && (name != null) && (pass != null) && (friendId != null)) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                friendManage.apply(userData.id,friendId.toInt())
-                                call.respondText(success)
+                                when (reject) {
+                                    null -> {
+                                        friendManage.apply(userData.id,friendId.toInt())
+                                        call.respondText(success)
+                                    }
+                                    "true" -> {
+                                        friendManage.disapproval(userData.id,friendId.toInt())
+                                        call.respondText(success)
+                                    }
+                                    else -> {
+                                        call.respondText(failed)
+                                    }
+                                }
                             }
                             else {
                                 call.respond(HttpStatusCode.BadRequest,failed)
@@ -292,10 +343,12 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }
                 get("/friend/task") {
+                    println("GET /user/{userId}/friend/task")
                     try {
                         val name   = call.parameters["name"]
                         val pass   = call.parameters["pass"]
@@ -309,8 +362,8 @@ fun main(args: Array<String>) {
                                     friendList.add(userManage.userData(it.Friendid))
                                 }
                                 friendList.forEach {
-                                    taskManager.allTask(it.id).forEach { friendtask ->
-                                        friendTask.add(friendtask)
+                                    taskManager.allTask(it.id).forEach { task ->
+                                        friendTask.add(task)
                                     }
                                 }
                                 call.respond(friendTask)
@@ -324,6 +377,7 @@ fun main(args: Array<String>) {
                         }
                     }
                     catch (e: Exception) {
+                        println(e)
                         call.respond(HttpStatusCode.BadRequest,failed)
                     }
                 }

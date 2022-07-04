@@ -14,8 +14,10 @@
 *** 2022.06.28 : フレンド申請関連追加
 *** 2022.07.03 : フレンド申請関連修正
 *** 2022.07.03 : フレンド申請画面追加
+*** 2022.07.03 : 仕様変更修正
  */
 
+import com.typesafe.config.ConfigException.Null
 import dataclass.FriendApplyData
 import dataclass.FriendData
 import dsl.FriendApplyTable
@@ -172,5 +174,21 @@ class Friend () {
         transaction {
             FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
         }  //FriendApplyTableから不許可した情報を消去
+    }
+
+    fun test(myid : Int,friendId: Int) : Boolean{
+        var comf = false
+        transaction {
+            val record = FriendTable.select{ (FriendTable.UserId eq myid) and (FriendTable.Friendid eq friendId)}.single()
+
+            if((myid != friendId) && record == null) {
+                comf = true
+                FriendApplyTable.insert {
+                    it[Myid] = myid
+                    it[Friendid] = friendId
+                }
+            }
+        }
+        return comf
     }
 }
