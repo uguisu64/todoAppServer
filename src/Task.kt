@@ -11,6 +11,7 @@
 *** 2022.06.14 タスク削除
 *** 2022.06.21 テーブル仕様変更
 *** 2022.07.03 : 仕様変更修正
+*** 2022.07.05 : 微修正
  */
 
 import dataclass.FriendTaskData
@@ -104,6 +105,13 @@ class Task() {
         return tasks
     }
 
+    /*
+    関数名: friendTask
+    引数　: friendId: Int, friendName: String
+    返り値: MutableList<FriendTaskData>
+    動作　: friendIdを受け取り、そのIDのユーザーの全てのレコードをリストにして返す
+    作成者: 加藤　颯真
+     */
     fun friendTask(friendId: Int, friendName: String) : MutableList<FriendTaskData> {
         val tasks = mutableListOf<FriendTaskData>()
 

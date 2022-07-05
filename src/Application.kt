@@ -24,6 +24,7 @@
 *** 2022.07.03 : 仕様変更修正
 *** 2022.07.04 : フレンド申請処理修正
 *** 2022.07.05 : ほぼ完成
+*** 2022.07.05 : 微修正
 */
 
 import dataclass.FriendTaskData
@@ -373,17 +374,8 @@ fun main(args: Array<String>) {
                                     friendList.add(userManage.userData(it.Friendid))
                                 }
                                 friendList.forEach {
-                                    taskManager.allTask(it.id).forEach { task ->
-                                        friendTask.add(FriendTaskData(
-                                            taskId = task.taskId,
-                                            userId = task.userId,
-                                            userName = it.name,
-                                            name = task.name,
-                                            deadLine = task.deadLine,
-                                            priority = task.priority,
-                                            share = task.share,
-                                            tag = task.tag
-                                        ))
+                                    taskManager.friendTask(it.id,it.name).forEach { task ->
+                                        friendTask.add(task)
                                     }
                                 }
                                 call.respond(friendTask)
