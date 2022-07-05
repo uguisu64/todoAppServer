@@ -39,9 +39,11 @@ class Friend () {
 
     fun friendSearch(userId: Int): Int{ //フレンド検索
         var friendId = 0
+
         transaction {
              friendId = User.select { User.id eq userId }.single()[User.id]
         }
+        
         return friendId
     }
 
@@ -56,6 +58,7 @@ class Friend () {
     fun friendlist(userId : Int): MutableList<FriendData> { //フレンド表示
 
         val frinedsData = mutableListOf<FriendData>()
+
         transaction {
             FriendTable.select { FriendTable.UserId eq userId }.forEach {
                 val friendId = FriendData(
@@ -63,6 +66,7 @@ class Friend () {
             frinedsData.add(friendId)
             }
         }
+
         return frinedsData;
     }
 
@@ -108,6 +112,7 @@ class Friend () {
 
     fun friendApplyMenu(myId : Int) : MutableList<FriendApplyData>{ //フレンド申請画面
         var applys = mutableListOf<FriendApplyData>()
+
         transaction {
             FriendApplyTable.select { FriendApplyTable.Myid eq myId }.forEach{
                 val apply = FriendApplyData(
@@ -129,6 +134,7 @@ class Friend () {
 
     fun friendApply(myId : Int, friendId: Int) : Boolean{ //フレンド申請
         var comf = false
+
         transaction {
             User.select{ User.id eq myId }.single()
             User.select{ User.id eq friendId }.single()
@@ -153,18 +159,22 @@ class Friend () {
     */
 
     fun apply(myId : Int, friendId : Int){  //申請許可
+
         transaction {
             val record = FriendApplyTable.select{ (FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}.single()
+
             if(record[FriendApplyTable.Myid] == myId && record[FriendApplyTable.Friendid] == friendId){
                 FriendTable.insert { //FriendTableに書き込む
                     it[UserId] = myId
                     it[Friendid] = friendId
                 }
+
                 FriendTable.insert {
                     it[Friendid] = myId
                     it[UserId] = friendId
                 }
             }
+
             FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}
         }
     }// FriendApplyTableから申請を行ったレコードを消去する
@@ -178,6 +188,7 @@ class Friend () {
     */
 
     fun disapproval(myId : Int, friendId: Int){  // 申請拒否
+
         transaction {
             FriendApplyTable.deleteWhere {(FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}
         }  //FriendApplyTableから不許可した情報を消去
