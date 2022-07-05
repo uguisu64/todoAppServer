@@ -5,7 +5,7 @@
 *** Purpose      :フレンド関係の処理
  */
 
-/*
+/*Commit History
 *** 2022.06.01 : fristcommit
 *** 2022.06.21 : friendlist修正
 *** 2022.06.21 : addfriend追加
@@ -19,7 +19,6 @@
 *** 2022.07.05 : ほぼ完成
  */
 
-import com.typesafe.config.ConfigException.Null
 import dataclass.FriendApplyData
 import dataclass.FriendData
 import dsl.FriendApplyTable
@@ -29,6 +28,7 @@ import dsl.User
 import dsl.FriendTable
 
 class Friend () {
+
     /*
     関数名: friendsearch
     引数　: userId : Int
@@ -36,6 +36,7 @@ class Friend () {
     動作　: 受け取ったユーザIDからUsertableでフレンドを探す。
     作成者: 平出　達大
     */
+
     fun friendsearch(userId: Int): Int{ //フレンド検索
         var friendid = 0
         transaction {
@@ -43,6 +44,7 @@ class Friend () {
         }
         return friendid
     }
+
     /*
     関数名: friendList
     引数　: userid : Int
@@ -50,14 +52,14 @@ class Friend () {
     動作　: 受け取ったユーザIDのフレンドをリストにして返す。
     作成者: 平出　達大
     */
+
     fun friendlist(userId : Int): MutableList<FriendData> { //フレンド表示
 
         val frinedid = mutableListOf<FriendData>()
         transaction {
             FriendTable.select { FriendTable.UserId eq userId }.forEach {
                 val friendId = FriendData(
-                    Friendid = it[FriendTable.Friendid]
-                )
+                    Friendid = it[FriendTable.Friendid])
             frinedid.add(friendId)
             }
         }
@@ -110,13 +112,10 @@ class Friend () {
             FriendApplyTable.select { FriendApplyTable.Myid eq Myid }.forEach{
                 val apply = FriendApplyData(
                     Myid = it[FriendApplyTable.Myid],
-                    Friendid = it[FriendApplyTable.Friendid]
-                )
+                    Friendid = it[FriendApplyTable.Friendid])
                 applys.add(apply)
             }
-
         }
-
         return applys;
     }
 
@@ -145,7 +144,6 @@ class Friend () {
         return comf
     }
 
-
     /*
     関数名: apply
     引数　: myid : Int, friendid : Int
@@ -154,8 +152,6 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    //相手のidを入れる。 FriendApplytable
-    //OK だったらFriendtableに入れる
     fun apply(myid : Int, friendid : Int){  //申請許可
         transaction {
             val record = FriendApplyTable.select{ (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}.single()

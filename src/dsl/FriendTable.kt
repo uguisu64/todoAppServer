@@ -5,7 +5,7 @@
 *** Purpose      :フレンドTable作成
  */
 
-/*
+/*commit History
 *** 2022.06.01 : fristcommit
 *** 2022.06.21 : FriendTable修正
 *** 2022.06.21 : 表題コメント追加
