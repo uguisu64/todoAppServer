@@ -15,6 +15,6 @@ package dsl
 import org.jetbrains.exposed.sql.Table
 
 object FriendTable : Table() {
-    val UserId = integer("userId")
+    val UserId = integer("UserId")
     val Friendid = integer("Friendid")
 }

@@ -30,19 +30,19 @@ import dsl.FriendTable
 class Friend () {
 
     /*
-    関数名: friendsearch
+    関数名: friendSearch
     引数　: userId : Int
     返り値: Int
     動作　: 受け取ったユーザIDからUsertableでフレンドを探す。
     作成者: 平出　達大
     */
 
-    fun friendsearch(userId: Int): Int{ //フレンド検索
-        var friendid = 0
+    fun friendSearch(userId: Int): Int{ //フレンド検索
+        var friendId = 0
         transaction {
-             friendid = User.select { User.id eq userId }.single()[User.id]
+             friendId = User.select { User.id eq userId }.single()[User.id]
         }
-        return friendid
+        return friendId
     }
 
     /*
@@ -55,15 +55,15 @@ class Friend () {
 
     fun friendlist(userId : Int): MutableList<FriendData> { //フレンド表示
 
-        val frinedid = mutableListOf<FriendData>()
+        val frinedsData = mutableListOf<FriendData>()
         transaction {
             FriendTable.select { FriendTable.UserId eq userId }.forEach {
                 val friendId = FriendData(
                     Friendid = it[FriendTable.Friendid])
-            frinedid.add(friendId)
+            frinedsData.add(friendId)
             }
         }
-        return frinedid;
+        return frinedsData;
     }
 
     /*
@@ -74,12 +74,12 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun addfrined(userId: Int, friendid : Int){ //フレンド追加
+    fun addFrined(userId: Int, friendId : Int){ //フレンド追加
 
         transaction {
             FriendTable.insert{
                 it[UserId] = userId
-                it[Friendid] = friendid
+                it[Friendid] = friendId
             }
         }
     }
@@ -92,9 +92,9 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun deletefriend(userId: Int, friendid : Int){ //フレンド消去
+    fun deleteFriend(userId: Int, friendId : Int){ //フレンド消去
         transaction {
-            FriendTable.deleteWhere { (FriendTable.UserId eq userId) and (FriendTable.Friendid eq friendid)}
+            FriendTable.deleteWhere { (FriendTable.UserId eq userId) and (FriendTable.Friendid eq friendId)}
         }
     }
 
@@ -106,10 +106,10 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun friendapplymenu(Myid : Int) : MutableList<FriendApplyData>{ //フレンド申請画面
+    fun friendApplyMenu(myId : Int) : MutableList<FriendApplyData>{ //フレンド申請画面
         var applys = mutableListOf<FriendApplyData>()
         transaction {
-            FriendApplyTable.select { FriendApplyTable.Myid eq Myid }.forEach{
+            FriendApplyTable.select { FriendApplyTable.Myid eq myId }.forEach{
                 val apply = FriendApplyData(
                     Myid = it[FriendApplyTable.Myid],
                     Friendid = it[FriendApplyTable.Friendid])
@@ -127,17 +127,17 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun FriendApply(myid : Int, friendId: Int) : Boolean{ //フレンド申請
+    fun friendApply(myId : Int, friendId: Int) : Boolean{ //フレンド申請
         var comf = false
         transaction {
-            User.select{ User.id eq myid }.single()
+            User.select{ User.id eq myId }.single()
             User.select{ User.id eq friendId }.single()
 
-            if((myid != friendId)) {
+            if((myId != friendId)) {
                 comf = true
                 FriendApplyTable.insert {
                     it[Myid] = friendId
-                    it[Friendid] = myid
+                    it[Friendid] = myId
                 }
             }
         }
@@ -152,20 +152,20 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun apply(myid : Int, friendid : Int){  //申請許可
+    fun apply(myId : Int, friendId : Int){  //申請許可
         transaction {
-            val record = FriendApplyTable.select{ (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}.single()
-            if(record[FriendApplyTable.Myid] == myid && record[FriendApplyTable.Friendid] == friendid){
+            val record = FriendApplyTable.select{ (FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}.single()
+            if(record[FriendApplyTable.Myid] == myId && record[FriendApplyTable.Friendid] == friendId){
                 FriendTable.insert { //FriendTableに書き込む
-                    it[UserId] = myid
-                    it[Friendid] = friendid
+                    it[UserId] = myId
+                    it[Friendid] = friendId
                 }
                 FriendTable.insert {
-                    it[Friendid] = myid
-                    it[UserId] = friendid
+                    it[Friendid] = myId
+                    it[UserId] = friendId
                 }
             }
-            FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
+            FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}
         }
     }// FriendApplyTableから申請を行ったレコードを消去する
 
@@ -177,9 +177,9 @@ class Friend () {
     作成者: 平出　達大
     */
 
-    fun disapproval(myid : Int, friendid : Int){  // 申請拒否
+    fun disapproval(myId : Int, friendId: Int){  // 申請拒否
         transaction {
-            FriendApplyTable.deleteWhere { (FriendApplyTable.Myid eq myid) and (FriendApplyTable.Friendid eq friendid)}
+            FriendApplyTable.deleteWhere {(FriendApplyTable.Myid eq myId) and (FriendApplyTable.Friendid eq friendId)}
         }  //FriendApplyTableから不許可した情報を消去
     }
 }

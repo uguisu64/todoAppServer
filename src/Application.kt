@@ -273,7 +273,7 @@ fun main(args: Array<String>) {
                         if((userid != null) && (name != null) && (pass != null) && (friendId != null)) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                if(friendManage.FriendApply(userData.id,friendId.toInt())){
+                                if(friendManage.friendApply(userData.id,friendId.toInt())){
                                     call.respondText(success)
                                 }
                                 else {
@@ -303,7 +303,7 @@ fun main(args: Array<String>) {
                         if(userid != null && name != null && pass != null) {
                             val userData = UserData(userid.toInt(),name,pass)
                             if(userManage.authUser(userData)){
-                                val friendApplyData = friendManage.friendapplymenu(userData.id)
+                                val friendApplyData = friendManage.friendApplyMenu(userData.id)
                                 val userDataList = mutableListOf<UserData>()
                                 friendApplyData.forEach { userDataList.add(userManage.userData(it.Friendid).copy(pass = "")) }
                                 call.respond(userDataList)
