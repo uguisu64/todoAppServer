@@ -43,7 +43,7 @@ class Friend () {
         transaction {
              friendId = User.select { User.id eq userId }.single()[User.id]
         }
-        
+
         return friendId
     }
 
